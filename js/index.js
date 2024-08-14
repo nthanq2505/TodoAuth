@@ -4,8 +4,8 @@ const StateOfFilterTasks = Object.freeze({
     NOT_DONE: 'not_done'
 });
 
-function TaskManager() {
-    this.tasks = [];
+function TaskManager(tasks = []) {
+    this.tasks = tasks;
     this.currentTaskIndex = null;
     this.currentFilter = StateOfFilterTasks.ALL;
 
@@ -121,41 +121,24 @@ TaskManager.prototype.renderTasks = function () {
 };
 
 TaskManager.prototype.saveTasks = function () {
-    localStorage.setItem('tasks', JSON.stringify(this.tasks));
+    const user = JSON.parse(localStorage.getItem('currentUser')) || JSON.parse(sessionStorage.getItem('currentUser'));
+    user.tasks = this.tasks;
+    if (localStorage.getItem('currentUser')) {
+        localStorage.setItem('currentUser', JSON.stringify(user));
+    } else {
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+    }
+
+    const users = JSON.parse(localStorage.getItem('users'));
+    const index = users.findIndex(currentUser => currentUser.username === user.username);
+    users[index] = user;
+    localStorage.setItem('users', JSON.stringify(users));
 }
-const taskManager = new TaskManager();
-
-const username = document.querySelector('.username');
-const localUser = localStorage.getItem('currentUser');
-const sessionUser = sessionStorage.getItem('currentUser');
-
-username.innerHTML = `
-    <p>Hello, ${localUser || sessionUser}</p>
-    <button class="logout-button" onclick="logout()">Logout</button>
-`
 
 function logout() {
     localStorage.removeItem('currentUser');
     sessionStorage.removeItem('currentUser');
     window.location.href = 'login.html';
-}
-
-
-
-window.onload = function () {
-    const localUser = localStorage.getItem('currentUser');
-    const sessionUser = sessionStorage.getItem('currentUser');
-    const currentWindow = window.location.href.split('/').pop();
-
-    if (localUser || sessionUser) {
-        if (currentWindow === 'login.html' || currentWindow === 'register.html') {
-            window.location.href = 'index.html';
-        }
-    } else {
-        if (currentWindow === 'index.html') {
-            window.location.href = 'login.html';
-        }
-    }
 }
 
 function handleLogin() {
@@ -164,21 +147,23 @@ function handleLogin() {
     const remember = document.querySelector('#remember').checked;
     const users = JSON.parse(localStorage.getItem('users')) || [];
     
-    const isExisted = users.some(user => user.username === username);
-    if (!isExisted) {
+    const isUserExisted = users.some(user => user.username === username);
+    if (!isUserExisted) {
         alert('Username does not exist');
         return;
     }
-    users.push({ username, password });
-    localStorage.setItem('users', JSON.stringify(users));
+    if (users.some(user => user.username === username && user.password !== password)) {
+        alert('Password is incorrect');
+        return;
+    }
+    const currentUser = users.find(user => user.username === username);
     if (remember) {
-        localStorage.setItem('currentUser', username);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
-        sessionStorage.setItem('currentUser', username);
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     }
     window.location.href = 'index.html';
 }
-
 
 function handleRegister() {
     const username = document.querySelector('#username').value;
@@ -186,8 +171,8 @@ function handleRegister() {
     const repeatPassword = document.querySelector('#repeat-password').value;
     const users = JSON.parse(localStorage.getItem('users')) || [];
 
-    const isExisted = users.some(user => user.username === username);
-    if (isExisted) {
+    const isUserExisted = users.some(user => user.username === username);
+    if (isUserExisted) {
         alert('Username is already existed');
         return;
     }
@@ -195,7 +180,33 @@ function handleRegister() {
         alert('Password does not match');
         return;
     }
-    users.push({ username, password });
+    users.push({ username, password, tasks: [] });
     localStorage.setItem('users', JSON.stringify(users));
     window.location.href = 'login.html';
+}
+
+window.onload = function () {
+    const localUser = localStorage.getItem('currentUser');
+    const sessionUser = sessionStorage.getItem('currentUser');
+    const currentWindow = window.location.href.split('/').pop();
+
+    if (localUser || sessionUser) {
+        if (currentWindow === 'login.html' || currentWindow === 'register.html' || currentWindow === '') {
+            window.location.href = 'index.html';
+        }
+    } else {
+        if (currentWindow === 'index.html' || currentWindow === '') {
+            window.location.href = 'login.html';
+        }
+    }
+}
+const username = document.querySelector('.username');
+const user = JSON.parse(localStorage.getItem('currentUser')) || JSON.parse(sessionStorage.getItem('currentUser'));
+const taskManager = new TaskManager(user.tasks);
+
+if (window.location.href.split('/').pop() === 'index.html') {
+    username.innerHTML = `
+        <p>Hello, ${user.username}</p>
+        <button class="red-button logout-button" onclick="logout()">Logout</button>
+    `
 }

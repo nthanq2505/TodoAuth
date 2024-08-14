@@ -37,12 +37,21 @@ img {
   color: #000;
 }
 
+.red-button:hover {
+  background-color: #ff3333;
+}
+
 button {
   background-color: #56d35b;
   padding: 5px 25px;
   border-radius: 5px;
   color: white;
   border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #4bb24f;
 }
 
 .edit-button {
