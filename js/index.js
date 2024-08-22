@@ -174,7 +174,7 @@ function handleLogin() {
     }
     */
   try {
-    fetch(`${ApiRoot}/login`, {
+    fetch(`${ApiRoot}/api/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -221,7 +221,7 @@ function handleRegister() {
   }
 
   try {
-    fetch(`${ApiRoot}/user/register`, {
+    fetch(`${ApiRoot}/api/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
